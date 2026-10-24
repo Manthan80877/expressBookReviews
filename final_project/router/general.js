@@ -5,7 +5,15 @@ let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
 
+// ========================================================
+// Centralized error handler function to reduce redundancy
+// ========================================================
+const handleServerError = (res, error) => {
+  console.error("Server Error:", error);
+  return res.status(500).json({ message: "Internal server error occurred" });
+};
 
+// Register a new user
 public_users.post("/register", (req,res) => {
   const username = req.body.username;
   const password = req.body.password;
@@ -22,20 +30,28 @@ public_users.post("/register", (req,res) => {
   return res.status(400).json({message: "Unable to register user. Please provide username and password"});
 });
 
-// Task 1/11: Get the book list available in the shop
+// Task 1 / Task 11: Get the book list available in the shop
+// Purpose: Retrieve all books from the database using async/await
 public_users.get('/', async function (req, res) {
   try {
     const allBooks = await Promise.resolve(books);
     return res.status(200).json(allBooks);
   } catch (error) {
-    return res.status(500).json({message: "Error fetching book list for debugging"});
+    return handleServerError(res, error);
   }
 });
 
-// Task 2/12: Get book details based on ISBN
+// Task 2 / Task 12: Get book details based on ISBN
+// Purpose: Retrieve a specific book by its ISBN using async/await and validate input
 public_users.get('/isbn/:isbn', async function (req, res) {
   try {
     const isbn = req.params.isbn;
+    
+    // Validation: Ensure ISBN parameter is provided
+    if (!isbn) {
+      return res.status(400).json({ message: "ISBN parameter is required" });
+    }
+    
     const book = await Promise.resolve(books[isbn]);
     if (book) {
       return res.status(200).json(book);
@@ -43,14 +59,21 @@ public_users.get('/isbn/:isbn', async function (req, res) {
       return res.status(404).json({message: "Book not found. Please check the ISBN."});
     }
   } catch (error) {
-    return res.status(500).json({message: "Error fetching book details for debugging"});
+    return handleServerError(res, error);
   }
 });
   
-// Task 3/13: Get book details based on author
+// Task 3 / Task 13: Get book details based on author
+// Purpose: Filter and retrieve books written by a specific author using async/await and validate input
 public_users.get('/author/:author', async function (req, res) {
   try {
     const author = req.params.author;
+    
+    // Validation: Ensure author parameter is provided
+    if (!author) {
+      return res.status(400).json({ message: "Author parameter is required" });
+    }
+    
     const booksByAuthor = [];
     const allBooks = await Promise.resolve(books);
     
@@ -67,14 +90,21 @@ public_users.get('/author/:author', async function (req, res) {
       return res.status(404).json({message: "Author not found. Please check the spelling."});
     }
   } catch (error) {
-    return res.status(500).json({message: "Error fetching author details for debugging"});
+    return handleServerError(res, error);
   }
 });
 
-// Task 4/14: Get all books based on title
+// Task 4 / Task 14: Get all books based on title
+// Purpose: Filter and retrieve books that match a specific title using async/await and validate input
 public_users.get('/title/:title', async function (req, res) {
   try {
     const title = req.params.title;
+    
+    // Validation: Ensure title parameter is provided
+    if (!title) {
+      return res.status(400).json({ message: "Title parameter is required" });
+    }
+    
     const booksByTitle = [];
     const allBooks = await Promise.resolve(books);
     
@@ -91,7 +121,7 @@ public_users.get('/title/:title', async function (req, res) {
       return res.status(404).json({message: "Title not found. Please check the spelling."});
     }
   } catch (error) {
-    return res.status(500).json({message: "Error fetching title details for debugging"});
+    return handleServerError(res, error);
   }
 });
 
@@ -109,42 +139,46 @@ public_users.get('/review/:isbn', function (req, res) {
 
 module.exports.general = public_users;
 
-// Task 11: Get all books using async/await and Axios
-async function getAllBooks() {
+// ==========================================
+// AXIOS FUNCTIONS (Standalone for Tasks 11-14)
+// ==========================================
+
+// Purpose: Function to get all books using Axios
+async function getAllBooksAxios() {
   try {
     const response = await axios.get('http://localhost:5000/');
     console.log(response.data);
   } catch (error) {
-    console.error(error);
+    console.error("Axios Error:", error.message);
   }
 }
 
-// Task 12: Search by ISBN using async/await and Axios
-async function getBookByISBN(isbn) {
+// Purpose: Function to get book by ISBN using Axios
+async function getBookByISBNAxios(isbn) {
   try {
     const response = await axios.get(`http://localhost:5000/isbn/${isbn}`);
     console.log(response.data);
   } catch (error) {
-    console.error(error);
+    console.error("Axios Error:", error.message);
   }
 }
 
-// Task 13: Search by Author using async/await and Axios
-async function getBookByAuthor(author) {
+// Purpose: Function to get book by Author using Axios
+async function getBookByAuthorAxios(author) {
   try {
     const response = await axios.get(`http://localhost:5000/author/${author}`);
     console.log(response.data);
   } catch (error) {
-    console.error(error);
+    console.error("Axios Error:", error.message);
   }
 }
 
-// Task 14: Search by Title using async/await and Axios
-async function getBookByTitle(title) {
+// Purpose: Function to get book by Title using Axios
+async function getBookByTitleAxios(title) {
   try {
     const response = await axios.get(`http://localhost:5000/title/${title}`);
     console.log(response.data);
   } catch (error) {
-    console.error(error);
+    console.error("Axios Error:", error.message);
   }
 }
